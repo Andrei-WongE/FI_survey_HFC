@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Section D
+/// Project: FICP_Survey_Project -- Section D
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -32,9 +32,16 @@
     //Set directory
 	include "Global_macro_A.do"
 	
-	global data "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/Data/Database `dir'"
+
+	
+	else {
+		global base "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project"
+		cd "$base"
+		
+		global data "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/Data/Database `dir'"
 			
-	global output "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/OUTPUT"
+		global output "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/OUTPUT"
+	}
 	
     //Install required packages
 	//ssc install listtab
@@ -47,25 +54,30 @@
 	
 	merge 1:1 country_code year status using "$data/b_financial_sector_landscape_-survey.dta"
 		
-	keep if status == "Submitted to Review" // 137 observations deleted
+	keep if status == "Submitted to Review" // 143 observations deleted
 	keep if year == 2022 // 0 observations deleted
-
-	//assert c(N) == 84
+	
+	drop _merge
+	
+	merge 1:1 country_code using "$base/WB_CountryClassification.dta"
+	keep if year == 2022 // 173 observations deleted
+	
+	//assert c(N) == 91
 	
 	//Create output files and setting charinclude
-	global filename  "FI_survey_Section_D_HFC_"  // Change accordinly
+	global filename  "FICP_survey_Section_D_HFC_"  // Change accordinly
 	global filedate : di %tdCCYY.NN.DD date(c(current_date), "DMY") // date of the report
 	
 	local hfc_file "$base/Data/$filename$filedate.csv"
 
 	export excel using  "$base/Data/$filename$filedate.csv", replace
 	
-	global id_info "country_code"
+	
 	
 	foreach var of varlist _all {
 		//di `"`: var label `var''"' 
 		char `var'[charname] "`var'" 
-
+	}
 	
 /////////////////////////////////////////////////////////////
 //// 1. Checks skip logic and missing values by section          ////
@@ -77,17 +89,20 @@
 		//Comment: All section D is conditional con b1_1/6!
 
 	//Check duplicate IDs
-	sort country_code
+	sort region country_code
 	
 	capture drop id_dup
 	duplicates tag country_code, generate(id_dup) // Sort and Check for unique identifiers
 		if _rc != 0 di "observations by country are NOT unique in country_code"
 		else if _rc == 0 di "Observations by country are unique in this section"
 	
-	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("Duplicate Country ID") headchars(charname)
+	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("  ,Duplicate Country ID") headchars(charname)
+	
+	sort region country_code
+
 	
 	///D1. Please specify what authorities (if any) have a clear legal mandate for and are in charge of: i) issuing the following types of regulation for financial service providers, and ii) licensing, supervising, monitoring, and enforcing compliance with such regulation. Enter the name of the authority (or authorities).
-
+	
 	#delimit ;
 	local var_1 d1_1_1
 				d1_1_2
@@ -168,9 +183,9 @@
 		dis "`a'"  "`b'"
 		replace consischeck = 1 if ((`a'== "NA" & `b' == "Yes")| (`a' == "N/A" & `b' == "Yes")|(`a' == "" & `b' == "Yes"))
 		//replace `a' = "NA" if consischeck == 1 
+	}
 
-
-	listtab $id_info `var_1' consischeck `var_2' if consischeck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Consitency check of D1 variables: Answer only if Commercial banks, Other banks and Financial cooperatives are regulated") headchars(charname)
+	listtab $id_info `var_1' consischeck `var_2' if consischeck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Consitency check of D1 variables: Answer only if Commercial banks, Other banks and Financial cooperatives are regulated") headchars(charname)
 	
 	
 	#delimit ;
@@ -253,9 +268,9 @@
 		dis "`a'"  "`b'"
 		replace consischeck = 1 if ((`a'== "NA" & `b' == "Yes")| (`a' == "N/A" & `b' == "Yes")|(`a' == "" & `b' == "Yes"))
 		//replace `a' = "NA" if consischeck == 1 
+	}
 
-
-	listtab $id_info `var_1' consischeck `var_2' if consischeck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Consitency check of D1 variables: Answer only if DTIs, CCPs and NB-EMIs are regulated") headchars(charname)	
+	listtab $id_info `var_1' consischeck `var_2' if consischeck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Consitency check of D1 variables: Answer only if DTIs, CCPs and NB-EMIs are regulated") headchars(charname)	
 	
 	
 	///D2.1. Are "commercial banks" permitted to carry out the following activities? 
@@ -280,15 +295,15 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & b1_1 == "No"
-
+	}
 
 	//Cleaning
 	
 	foreach i of local var_1 {
 		replace `i' = "NA" if b1_1 == "No"| b1_1 == "NA"
+	}
 
-
-	listtab $id_info `var_1' mcheck b1_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D2.1, on having regulated commercial banks") headchars(charname)
+	listtab $id_info `var_1' mcheck b1_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D2.1, on having regulated commercial banks") headchars(charname)
 	
 		//Comment: Is an explanation necesary if d2_1_a/k_1== Yes?
 
@@ -316,16 +331,16 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & b1_2 == "Yes"
-
+	}
 
 	//Cleaning
 	
 	foreach i of local var_1 {
 		replace `i' = "NA" if b1_2 == "No"| b1_2 == "NA"
-
+	}
 	
 	
-	listtab $id_info `var_1' mcheck b1_2 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D2.2, on having regulated other banks") headchars(charname)
+	listtab $id_info `var_1' mcheck b1_2 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D2.2, on having regulated other banks") headchars(charname)
 
 		//Comment: Is an explanation necesary if d2_2_a/k_1== Yes?
 		
@@ -351,15 +366,15 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & b1_3 == "Yes"
-
+	}
 
 	//Cleaning
 	
 	foreach i of local var_1 {
 		replace `i' = "NA" if b1_3 == "No"| b1_3 == "NA"
-
+	}
 		
-	listtab $id_info `var_1' mcheck b1_3 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D2.3, on having regulated financial cooperatives") headchars(charname)
+	listtab $id_info `var_1' mcheck b1_3 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D2.3, on having regulated financial cooperatives") headchars(charname)
 
 		//Comment: Is an explanation necesary if d2_3_a/k_1== Yes?
 
@@ -385,9 +400,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if `i' != "Not applicable" & b1_4 == "No"
-	
+	}	
 
-	listtab $id_info `var_1' mcheck b1_4 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D2.4, on having regulated ODTIs") headchars(charname)
+	listtab $id_info `var_1' mcheck b1_4 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D2.4, on having regulated ODTIs") headchars(charname)
 
 	#delimit ;	
 	local var_1	d2_4_a_2				 
@@ -430,11 +445,11 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes but restricted")
-
+	}
 	br $id_info `var_1' skipcheck `var_2' if skipcheck == 1
 
 			
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in D2.4 due to d2_4_a_1 != Yes but restricted, skip d2_4_a/k_2")headchars(charname)  
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in D2.4 due to d2_4_a_1 != Yes but restricted, skip d2_4_a/k_2")headchars(charname)  
 
 
 	
@@ -460,10 +475,10 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if `i' != "Not applicable" & b1_5 != "Yes"
-	
+	}	
 	br $id_info `var_1' mcheck b1_5 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck b1_5 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D2.5, on having regulated CCPs") headchars(charname)
+	listtab $id_info `var_1' mcheck b1_5 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D2.5, on having regulated CCPs") headchars(charname)
 
 	#delimit ;	
 	local var_1	d2_5_a_2				 
@@ -504,11 +519,11 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes but restricted")
-
+	}
 	br $id_info `var_1' skipcheck `var_2' if skipcheck == 1
 
 			
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in D2.5 due to d2_5_a_1 != Yes but restricted, skip d2_5_a/k_2")headchars(charname)  	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in D2.5 due to d2_5_a_1 != Yes but restricted, skip d2_5_a/k_2")headchars(charname)  	
 	
 	
 
@@ -535,10 +550,10 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if `i' != "Not applicable" & b1_6 != "Yes"
-	
+	}	
 	br $id_info `var_1' mcheck b1_6 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck b1_6 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D2.6, on having regulated non-bank e-money issuers") headchars(charname)
+	listtab $id_info `var_1' mcheck b1_6 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D2.6, on having regulated non-bank e-money issuers") headchars(charname)
 
 	#delimit ;	
 	local var_2	d2_6_a_2				 
@@ -583,10 +598,10 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes but restricted")
-
+	}
 	br $id_info `var_1' skipcheck `var_2' if skipcheck == 1	
 			
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in D2.6 due to d2_6_a_1 != Yes but restricted, skip d2_6_a/l_2") headchars(charname)  	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in D2.6 due to d2_6_a_1 != Yes but restricted, skip d2_6_a/l_2") headchars(charname)  	
 	
 	
 	///D3a. As part of rulemaking process, does your agency have a formal process to consult with the industry?
@@ -599,7 +614,7 @@
 	
 	mdesc d3_a
 
-	listtab $id_info d3_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D3a") headchars(charname)
+	listtab $id_info d3_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D3a") headchars(charname)
 		
 
 	///D3b. With what frequency do you consult with industry?
@@ -620,7 +635,7 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & d3_a != "Yes"
-	
+	}	
 	br $id_info `var_1' mcheck d3_a if mcheck == 1
 		
 	//Cleaning
@@ -629,10 +644,10 @@
 	
 	foreach i of local var_1 {
 		replace `i' = "" if d3_a == "No"|d3_a == "NA"
-
+	}
 	br $id_info `var_1' mcheck d3_a if mcheck == 1
 
-	listtab $id_info `var_1' mcheck d3_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D3b and D3c, on having a process to consult with the industry") headchars(charname)
+	listtab $id_info `var_1' mcheck d3_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D3b and D3c, on having a process to consult with the industry") headchars(charname)
 	
 
 	///D4a. As part of rulemaking process, does your agency have a formal process to consult with the consumers?
@@ -645,7 +660,7 @@
 	
 	mdesc d4_a
 
-	listtab $id_info d4_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D4a") headchars(charname)	
+	listtab $id_info d4_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D4a") headchars(charname)	
 
 	///D4b. With what frequency do you consult with consumers?
 	///D4c. Through what channel do you consult with consumers? (Mark all that apply) 
@@ -664,7 +679,7 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & d4_a != "Yes"
-	
+	}	
 	br $id_info `var_1' mcheck d4_a if mcheck == 1
 		
 	//Cleaning
@@ -673,10 +688,10 @@
 	
 	foreach i of local var_1 {
 		replace `i' = "" if d4_a == "No"|d4_a == "NA"
-
+	}
 	br $id_info `var_1' mcheck d4_a if mcheck == 1
 
-	listtab $id_info `var_1' mcheck d4_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in D4b and D4c, on having a process to consult with the industry") headchars(charname)
+	listtab $id_info `var_1' mcheck d4_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in D4b and D4c, on having a process to consult with the industry") headchars(charname)
 
 
 	

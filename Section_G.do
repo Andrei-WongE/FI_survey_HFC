@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Section G
+/// Project: FICP_Survey_Project -- Section G
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -33,10 +33,15 @@
 	include "Global_macro_A.do"
 	
 
-	global data "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/Data/Database `dir'"
-			
-	global output "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/OUTPUT"
 	
+	else {
+		global base "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project"
+		cd "$base"
+		
+		global data "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/Data/Database `dir'"
+			
+		global output "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/OUTPUT"
+	}
 	
     //Install required packages
 	//ssc install listtab
@@ -49,34 +54,39 @@
 	
 	merge 1:1 country_code year status using "$data/b_financial_sector_landscape_-survey.dta"
 	
-	keep if status == "Submitted to Review" // 137 observations deleted
+	keep if status == "Submitted to Review" // 143 observations deleted
 	keep if year == 2022 // 0 observations deleted
+	
+	drop _merge
 
-	//assert c(N) == 84
+	merge 1:1 country_code using "$base/WB_CountryClassification.dta"
+	keep if year == 2022 // 173 observations deleted
+	
+	//assert c(N) == 91
 	
 	//Create output files and setting charinclude
-	global filename  "FI_survey_Section_G_HFC_"  // Change accordinly
+	global filename  "FICP_survey_Section_G_HFC_"  // Change accordinly
 	global filedate : di %tdCCYY.NN.DD date(c(current_date), "DMY") // date of the report
 	
 	local hfc_file "$base/Data/$filename$filedate.csv"
 
 	export excel using  "$base/Data/$filename$filedate.csv", replace
 	
-	global id_info "country_code"
+	
 	
 	foreach var of varlist _all {
 		char `var'[charname] "`var'"
-
+	}
 
 	//Check duplicate IDs
-	sort country_code
+	sort region country_code
 	
 	capture drop id_dup
 	duplicates tag country_code, generate(id_dup) // Sort and Check for unique identifiers
 		if _rc != 0 di "observations by country are NOT unique in country_code"
 		else if _rc == 0 di "observations by country are unique in this section"
 	
-	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("Duplicate Country ID") headchars(charname)	
+	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("  ,Duplicate Country ID") headchars(charname)	
 	
 /////////////////////////////////////////////////////////////
 //// 1. Checks skip logic and missing values by section          ////
@@ -106,11 +116,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G1.1") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G1.1") headchars(charname)
 
 
 	///G1.2 Are there any requirements (law or regulation) to provide information to consumers in a document with a standardized format in paper or electronic form (e.g. key facts statement, disclosure statement, summary sheet) during each of the three transaction stages? Please mark all that apply.
@@ -127,11 +137,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G1.2") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G1.2") headchars(charname)
 	
 
 	///G2. If financial service providers are required to use a document with a standardized format, is the standardized format tested with consumers to determine whether information provided is easy to understand and allows consumers to make an informed choice?
@@ -145,7 +155,7 @@
 
 	mdesc g2_1
 	
-	listtab $id_info g2_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G2") headchars(charname)
+	listtab $id_info g2_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G2") headchars(charname)
 	
 	
 	///G3. By law or regulation, at the shopping and/or pre-contractual stage, do the disclosure requirements cover:
@@ -179,11 +189,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G3") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G3") headchars(charname)
 	
 		
    //Consistency check, If g2_1 == No|NA then ALL g3_1/4_1/5 = NA (No to disclosure requirements)
@@ -191,10 +201,10 @@
 	gen consistcheck = 0
 	
 	foreach i of local var_1 {
-		replace consistcheck = 1 if `i' != "NA" & g2_1 == "No"
+		replace consistcheck = 1 if missing(`i') & (g2_1 == "No"| g2_1 == "NA")
+	}
 
-
-	listtab $id_info `var_1' consistcheck g2_1 if consistcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Consistency check of G2 due to disclosure requirements [b2_b == No THEN g3_1/4_1/5 = NA]") headchars(charname)  
+	listtab $id_info `var_1' consistcheck g2_1 if consistcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Consistency check of G2 due to disclosure requirements [b2_b == No THEN g3_1/4_1/5 = NA]") headchars(charname)  
 	//Comment lots of countries have not followed this reasoning.
 	
 
@@ -240,11 +250,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G4") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G4") headchars(charname)
 	
 	
 	///G5. By law or regulation, do the disclosure requirements for periodic statements mentioned in question G4 above cover:
@@ -343,7 +353,7 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 		 
@@ -447,11 +457,11 @@
 		
 		dis "`a'"  "`b'"
 		replace consistcheck = 1 if (`a' != "NA" & `b' == "Yes")
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G5") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G5") headchars(charname)
 	
-	listtab $id_info `var_1' consistcheck `var_2' if consistcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Consistency check of G5 due to disclosure requirements for periodic statements [g4_e_1/6 == Yes THEN g5_1/3_a/g_1/6 = NA]") headchars(charname)  
+	listtab $id_info `var_1' consistcheck `var_2' if consistcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Consistency check of G5 due to disclosure requirements for periodic statements [g4_e_1/6 == Yes THEN g5_1/3_a/g_1/6 = NA]") headchars(charname)  
 
 	
 	///G6. By law or regulation, are financial service providers required to notify their customers of any changes in the terms and conditions? 
@@ -470,11 +480,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in G6 and G7a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G6 and G7a") headchars(charname)
 	
 	
 	///G7b. Please indicate if the code(s) apply to the following types of products: 
@@ -557,18 +567,85 @@
 		local b : word `i' of `var_2'
 		
 		dis "`a'"  "`b'"
-		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
+		replace skipcheck = 1 if (missing(`a') & `b' == "Yes" & g7_a == "Yes")
+	}
 
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in G7b due to b1_1/6 == NA|No THEN g7_b_1/5_1/7 == NA")headchars(charname)  
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in G7b due to b1_1/6 == NA|No THEN g7_b_1/5_1/7 == NA")headchars(charname)  
-
-	//Comment: IF g7_a == No|NA THEN automatically g7_b_1/4_1/7 == ""
+		//Comment: IF g7_a == No|NA THEN automatically g7_b_1/4_1/7 == ""
  
 	
 	///G8. If any industry Code of Conduct exists, please provide a Yes/No answer for each industry Code. 
 
-	//Comment: IF g7_a == No|NA THEN automatically g8_a/h_1/5 == ""
-
-
+		//Comment: IF g7_a == No|NA THEN automatically g8_a/h_1/5 == ""
+		
+		
+		//Counting nmissing values, from a maximun of 5 values in g7_b_1/5_1
+		capture drop total_miss_g7_b
+		egen total_miss_g7_b = rowmiss(g7_b_1_1 g7_b_2_1 g7_b_3_1 g7_b_4_1 g7_b_5_1) if g7_a == "Yes"
+			
+		//Counting nmissing values, 
+		capture drop total_miss_g8
+		
+		#delimit ;	
+		egen total_miss_g8 = rowmiss(g8_a_1
+									g8_a_2
+									g8_a_3
+									g8_a_4
+									g8_a_5
+									g8_b_1
+									g8_b_2
+									g8_b_3
+									g8_b_4
+									g8_b_5
+									g8_c_1
+									g8_c_2
+									g8_c_3
+									g8_c_4
+									g8_c_5
+									g8_d_1
+									g8_d_2
+									g8_d_3
+									g8_d_4
+									g8_d_5
+									g8_e_1
+									g8_e_2
+									g8_e_3
+									g8_e_4
+									g8_e_5
+									g8_f_1
+									g8_f_2
+									g8_f_3
+									g8_f_4
+									g8_f_5
+									g8_g_1
+									g8_g_2
+									g8_g_3
+									g8_g_4
+									g8_g_5
+									g8_h_1
+									g8_h_2
+									g8_h_3
+									g8_h_4
+									g8_h_5) if g7_a == "Yes";
+	#delimit cr		
+			
+			//Count of missings values in g7 multiplied by 8 MUST equal to the count of missing values in g8
+			capture drop total_miss_g7_b_8
+			gen total_miss_g7_b_8 = total_miss_g7_b * 8 if !missing(total_miss_g7_b)
+			
+			capture drop mcheck
+			gen mcheck = 0
+	
+			replace mcheck = 1 if (total_miss_g7_b_8 != total_miss_g8) & !missing(total_miss_g7_b, total_miss_g8)
+			
+			
+			listtab $id_info total_miss_g8 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in G8") headchars(charname)	
+			
+			
+			drop total_miss_g8 total_miss_g7_b total_miss_g7_b_8
+		
+		
+		
 	////END////
 

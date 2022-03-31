@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Section C
+/// Project: FICP_Survey_Project -- Section C
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -32,9 +32,16 @@
     //Set directory
 	include "Global_macro_A.do"
 	
-	global data "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/Data/Database `dir'"
+
+	
+	else {
+		global base "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project"
+		cd "$base"
+		
+		global data "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/Data/Database `dir'"
 			
-	global output "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/OUTPUT"
+		global output "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/OUTPUT"
+	}
 	
     //Install required packages
 	//ssc install listtab
@@ -47,25 +54,28 @@
 	
 	//merge 1:1 country_code year status using "$data/b_financial_sector_landscape_-survey.dta"
 		
-	keep if status == "Submitted to Review" // 137 observations deleted
+	keep if status == "Submitted to Review" // 142 observations deleted
 	keep if year == 2022 // 0 observations deleted
 
-	//assert c(N) == 84
+	merge 1:1 country_code using "$base/WB_CountryClassification.dta"
+	keep if year == 2022 // 173 observations deleted
+	
+	//assert c(N) == 91
 	
 	//Create output files and setting charinclude
-	global filename  "FI_survey_Section_C_HFC_"  // Change accordinly
+	global filename  "FICP_survey_Section_C_HFC_"  // Change accordinly
 	global filedate : di %tdCCYY.NN.DD date(c(current_date), "DMY") // date of the report
 	
 	local hfc_file "$base/Data/$filename$filedate.csv"
 
 	export excel using  "$base/Data/$filename$filedate.csv", replace
 	
-	global id_info "country_code"
+	
 	
 	foreach var of varlist _all {
 		//di `"`: var label `var''"' 
 		char `var'[charname] "`var'" 
-
+	}
 	
 /////////////////////////////////////////////////////////////
 //// 1. Checks skip logic and missing values by section          ////
@@ -75,14 +85,14 @@
 	///C. Financial Inclusion Policies and strategies
 
 	//Check duplicate IDs
-	sort country_code
+	sort region country_code
 	
 	capture drop id_dup
 	duplicates tag country_code, generate(id_dup) // Sort and Check for unique identifiers
 		if _rc != 0 di "observations by country are NOT unique in country_code"
 		else if _rc == 0 di "Observations by country are unique in this section"
 	
-	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("Duplicate Country ID") headchars(charname)
+	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("  ,Duplicate Country ID") headchars(charname)
 	
 	///C1. Does your country have any of the following national strategy documents to promote activities relevant to financial inclusion:
 	
@@ -102,11 +112,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	br $id_info `var_1' if mcheck == 1
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Status") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Status") headchars(charname)
 	
 	 #delimit ;
 	local var_1 c1_1_2_specify
@@ -141,9 +151,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if missing(`a') & `b' == "Yes"
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in C1 due to c1_1/7_2 == No|NA, skip c1_1/7_2_specify") headchars(charname)  
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in C1 due to c1_1/7_2 == No|NA, skip c1_1/7_2_specify") headchars(charname)  
 		 
 
 	 #delimit ;
@@ -162,9 +172,9 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_1_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_1_1 if mcheck == 1
-	listtab $id_info `var_1' mcheck c1_1_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: National Financial Inclusion Strategy") headchars(charname)  		 
+	listtab $id_info `var_1' mcheck c1_1_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: National Financial Inclusion Strategy") headchars(charname)  		 
 		 
 	 #delimit ;
 	local var_1 c1_2_3
@@ -182,10 +192,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_2_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_2_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_2_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: General financial sector development strategy with a financial inclusion component") headchars(charname)  	
+	listtab $id_info `var_1' mcheck c1_2_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: General financial sector development strategy with a financial inclusion component") headchars(charname)  	
 	
 	
 	 #delimit ;
@@ -204,10 +214,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_3_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_3_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_3_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: National development strategy with a financial inclusion component") headchars(charname)  	
+	listtab $id_info `var_1' mcheck c1_3_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: National development strategy with a financial inclusion component") headchars(charname)  	
 		
 	
 	 #delimit ;
@@ -226,10 +236,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_4_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_4_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_4_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Microfinance strategy") headchars(charname)  		
+	listtab $id_info `var_1' mcheck c1_4_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Microfinance strategy") headchars(charname)  		
 	
 
 	 #delimit ;
@@ -248,10 +258,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_5_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_5_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_5_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Financial Capability/Literacy/Education strategy") headchars(charname)  		
+	listtab $id_info `var_1' mcheck c1_5_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Financial Capability/Literacy/Education strategy") headchars(charname)  		
 	
 	
 	 #delimit ;
@@ -270,10 +280,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_6_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_6_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_6_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Digital development strategy with a financial inclusion component") headchars(charname)  	
+	listtab $id_info `var_1' mcheck c1_6_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Digital development strategy with a financial inclusion component") headchars(charname)  	
 	
 	
 	 #delimit ;
@@ -292,10 +302,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_7_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_7_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_7_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Digital Financial Services or fintech strategy") headchars(charname)  		
+	listtab $id_info `var_1' mcheck c1_7_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Digital Financial Services or fintech strategy") headchars(charname)  		
 	
 	
 	#delimit ;
@@ -319,9 +329,9 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_1_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_1_1 if mcheck == 1
-	listtab $id_info `var_1' mcheck c1_1_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: National Financial Inclusion Strategy:   explicitnumerical targets") headchars(charname)  		 
+	listtab $id_info `var_1' mcheck c1_1_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: National Financial Inclusion Strategy:   explicitnumerical targets") headchars(charname)  		 
 		 
 		 
 		 
@@ -344,10 +354,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_2_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_2_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_2_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: General financial sector development strategy with a financial inclusion component:   explicit numerical targets") headchars(charname)  	
+	listtab $id_info `var_1' mcheck c1_2_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: General financial sector development strategy with a financial inclusion component:   explicit numerical targets") headchars(charname)  	
 	
 	
 	 #delimit ;
@@ -369,10 +379,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_3_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_3_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_3_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: National development strategy with a financial inclusion component:   explicit numerical targets") headchars(charname)  	
+	listtab $id_info `var_1' mcheck c1_3_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: National development strategy with a financial inclusion component:   explicit numerical targets") headchars(charname)  	
 		
 	
 	 #delimit ;
@@ -394,10 +404,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_4_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_4_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_4_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Microfinance strategy:   explicit numerical targets") headchars(charname)  		
+	listtab $id_info `var_1' mcheck c1_4_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Microfinance strategy:   explicit numerical targets") headchars(charname)  		
 	
 
 	 #delimit ;
@@ -419,10 +429,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_5_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_5_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_5_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Financial Capability/Literacy/Education strategy:   explicit numerical targets") headchars(charname)  		
+	listtab $id_info `var_1' mcheck c1_5_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Financial Capability/Literacy/Education strategy:   explicit numerical targets") headchars(charname)  		
 	
 	
 	 #delimit ;
@@ -444,10 +454,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_6_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_6_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_6_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Digital development strategy with a financial inclusion component:   explicit numerical targets") headchars(charname)  	
+	listtab $id_info `var_1' mcheck c1_6_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Digital development strategy with a financial inclusion component:   explicit numerical targets") headchars(charname)  	
 	
 	
 	 #delimit ;
@@ -469,10 +479,10 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c1_7_1 != "No"
 		
- 
+	} 
 	br $id_info `var_1' mcheck c1_7_1 if mcheck == 1
 	
-	listtab $id_info `var_1' mcheck c1_7_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C1: Digital Financial Services or fintech strategy:   explicit numerical targets") headchars(charname)  			
+	listtab $id_info `var_1' mcheck c1_7_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C1: Digital Financial Services or fintech strategy:   explicit numerical targets") headchars(charname)  			
 	
 	
 		 
@@ -505,11 +515,11 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
 
-
+	}
 
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C2") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C2") headchars(charname)
 
 	
 	///C2.2 For any initiative which provides a basic account product, please provide the following details about the basic transaction accounts required to be made available in your jurisdiction
@@ -533,11 +543,11 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
 
-
+	}
 
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C2.2") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C2.2") headchars(charname)
 		
 		
 	//Cleaning: Variable name wrong! c2_2_a_secify, changed to c2_2_a_specify
@@ -569,9 +579,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & (`b' == "Other"|`b' == "Yes"))
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in C2.2 due to If c2_2_a_1/3 != Other, Skips c2_2_1/3_specify") headchars(charname)	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in C2.2 due to If c2_2_a_1/3 != Other, Skips c2_2_1/3_specify") headchars(charname)	
 	
 		//Comment: c2_2_a_1/3, not required, just comments
 
@@ -586,7 +596,7 @@
 
 	mdesc c2_3_a
 
-	listtab $id_info c2_3_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C2.3a") headchars(charname)	
+	listtab $id_info c2_3_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C2.3a") headchars(charname)	
 	
 	///C2.3b Please mark all required features that apply and indicate the terms under which they must be provided
 
@@ -620,7 +630,7 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c2_3_a == "Yes"
 
-
+	}
 	br $id_info `var_1' if mcheck == 1
 	mdesc `var_1'
 	
@@ -628,9 +638,9 @@
 			//Comment: Automatically populates No even if  IF c2_3_a ==No|NA
 			foreach i of local var_1 {
 				replace `i' = "" if c2_3_a == "No"| c2_3_a == "NA"
-		
+			}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C2.3b") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C2.3b") headchars(charname)
 
 
 	///C2.3c Are the following features embedded at no extra cost to the customer:
@@ -648,7 +658,7 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') & c2_3_a == "Yes"
 
-
+	}
 
 	mdesc `var_1'
 	
@@ -656,9 +666,9 @@
 			//Comment: Automatically populates No even if  IF c2_3_a ==No|NA
 			foreach i of local var_1 {
 				replace `i' = "" if c2_3_a == "No"| c2_3_a == "NA"
-		
+			}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C2.3c") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C2.3c") headchars(charname)
 
 	
 	///C3. In order to monitor the level of access to financial services, has your agency or any other agency conducted any of the following in the past 3 years? Please mark all that apply. 
@@ -672,11 +682,11 @@
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
 
-
+	}
 
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in C3") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in C3") headchars(charname)
 	
 	
 	#delimit ;
@@ -722,9 +732,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if missing(`a') & `b' == "Yes"
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in C3 due to If c3_1/6_1 == No|NA THEN skip c3_1/6_2 and c3_1/6_3") headchars(charname)	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in C3 due to If c3_1/6_1 == No|NA THEN skip c3_1/6_2 and c3_1/6_3") headchars(charname)	
 		
 	
 		//Comment: c3_1/6_3 have Non URL responses

@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Section H
+/// Project: FICP_Survey_Project -- Section H
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -33,11 +33,15 @@
 	include "Global_macro_A.do"
 	
 
-	global data "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/Data/Database `dir'"
-			
-	global output "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/OUTPUT"
 	
-
+	else {
+		global base "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project"
+		cd "$base"
+		
+		global data "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/Data/Database `dir'"
+			
+		global output "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/OUTPUT"
+	}
 	
     //Install required packages
 	//ssc install listtab
@@ -51,22 +55,25 @@
 	keep if status == "Submitted to Review" // 137 observations deleted
 	keep if year == 2022 // 0 observations deleted
 
-	//assert c(N) == 84
+	merge 1:1 country_code using "$base/WB_CountryClassification.dta"
+	keep if year == 2022 // 173 observations deleted
+	
+	//assert c(N) == 91
 	
 	//Create output files and setting charinclude
-	global filename  "FI_survey_Section_H_HFC_"  // Change accordinly
+	global filename  "FICP_survey_Section_H_HFC_"  // Change accordinly
 	global filedate : di %tdCCYY.NN.DD date(c(current_date), "DMY") // date of the report
 	
 	local hfc_file "$base/Data/$filename$filedate.csv"
 
 	export excel using  "$base/Data/$filename$filedate.csv", replace
 	
-	global id_info "country_code"
+	
 	
 	foreach var of varlist _all {
 		//di `"`: var label `var''"' 
 		char `var'[charname] "`var'" 
-
+	}
 	
 /////////////////////////////////////////////////////////////
 //// 1. Checks skip logic and missing values by section          ////
@@ -76,14 +83,14 @@
 	//H. Fair Treatment and Business Conduct 
 
 	//Check duplicate IDs
-	sort country_code
+	sort region country_code
 	
 	capture drop id_dup
 	duplicates tag country_code, generate(id_dup) // Sort and Check for unique identifiers
 		if _rc != 0 di "observations by country are NOT unique in country_code"
 		else if _rc == 0 di "Observations by country are unique in this section"
 	
-	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("Duplicate Country ID") headchars(charname)
+	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("  ,Duplicate Country ID") headchars(charname)
 	
 	///H1.For the following products types, are there provisions in law or regulation that require financial service providers to provide consumers with products only if they are determined to be appropriate  for a consumer’s specific needs and circumstances?  Please mark all that apply.
 
@@ -108,7 +115,7 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
@@ -123,11 +130,11 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in H1") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in H1") headchars(charname)
 
-	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in H1 due to h_1_1/3_* == NO THEN skip h_1_1/3") headchars(charname)	
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in H1 due to h_1_1/3_* == NO THEN skip h_1_1/3") headchars(charname)	
 	
 
 	///H2a. Are there provisions in law or regulation that restrict excessive borrowing by individuals and/or require financial service providers to assess affordability of credit for the prospective borrowers?  Please mark all that apply. 
@@ -147,7 +154,7 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 
@@ -159,9 +166,9 @@
 	replace skipcheck = 1 if (missing(h_2_1) & h_2_4_other == "Yes")
 	
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in H2a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in H2a") headchars(charname)
 	
-	listtab $id_info h_2_1 skipcheck h_2_4_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in H2a due to h_2_4_other == No THEN SKIP h_2_1") headchars(charname)
+	listtab $id_info h_2_1 skipcheck h_2_4_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in H2a due to h_2_4_other == No THEN SKIP h_2_1") headchars(charname)
 
 	
 	///H2b.  Are credit providers required to collect and validate any of the following type of information? 
@@ -184,9 +191,9 @@
 	foreach i of local var_1 {
 		replace skipcheck = 1 if missing(`i') & h_2_3_creditpro == "Yes"
 
+	}
 
-
-	listtab $id_info `var_1' skipcheck h_2_3_creditpro if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in H2b due to h_2_3_creditpro == NO THEN skip h2b_a/c_1/2") headchars(charname)	
+	listtab $id_info `var_1' skipcheck h_2_3_creditpro if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in H2b due to h_2_3_creditpro == NO THEN skip h2b_a/c_1/2") headchars(charname)	
 	
 		//Comment: Check Mozambique
 
@@ -211,11 +218,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in H3a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in H3a") headchars(charname)
 
 
 
@@ -253,10 +260,10 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
-
+	}
 
 	
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in H3b due to h3a_c_1/3 == No THEN skip h3b_a/b_1/3") headchars(charname)	
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in H3b due to h3a_c_1/3 == No THEN skip h3b_a/b_1/3") headchars(charname)	
 
 
 	///H4. Are there provisions in law or regulation that prohibit or restrict financial service providers from carrying out any of the following practices: Please mark all that apply.
@@ -295,11 +302,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in H4 to H10") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in H4 to H10") headchars(charname)
 
 	
 	////END////

@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Section E
+/// Project: FICP_Survey_Project -- Section E
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -32,86 +32,162 @@
     //Set directory
 	include "Global_macro_A.do"
 	
-	global data "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/Data/Database `dir'"
-			
-	global output "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/OUTPUT"
+
 	
+	else {
+		global base "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project"
+		cd "$base"
+		
+		global data "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/Data/Database `dir'"
+			
+		global output "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/OUTPUT"
+	}
 	
     //Install required packages
 	//ssc install listtab
 	
-/////////////////////////////////////////////////////////////
-//// 0. Import files           ////
-////////////////////////////////////////////////////////////
-	
-	/*Merge all files in a folder 
-	
-	dir "$data\*.dta"
 
-	local flist: dir "$data\*.dta"
-	
-	foreach f of local flist {
-	   merge 1:1 using `f', generate(merge_`f') 
-}
-	*/
-	
 /////////////////////////////////////////////////////////////
 //// 1. Checks skip logic and missing values by section          ////
 ////////////////////////////////////////////////////////////
 	
-	//A. Background Information	
-	
-	
-	//B. Financial Sector Landscape	
-
-	
-	//C. Financial Inclusion Policies and strategies	
-
-	
-	//D. Legal, Regulatory and Supervisory Framework for Relevant Financial Service Providers	
-
 	
 	//E. Enabling Regulatory Framework for Financial Inclusion
 	use "$data/e_regulatory_framework_relevant_-survey.dta", clear
 	
 	merge 1:1 country_code year status using "$data/b_financial_sector_landscape_-survey.dta"
 	
-	keep if status == "Submitted to Review" // 137 observations deleted
-	keep if _merge == 3 // 0 observations deleted
+	keep if status == "Submitted to Review" // 143 observations deleted
 	keep if year == 2022 // 0 observations deleted
 
-	//assert c(N) == 84
+	drop _merge
+	
+	merge 1:1 country_code using "$base/WB_CountryClassification.dta"
+	keep if year == 2022 // 173 observations deleted
+	
+	//assert c(N) == 91
 	
 	//Create output files and setting charinclude
-	global filename  "FI_survey_Section_E_HFC_"
+	global filename  "FICP_survey_Section_E_HFC_"
 	global filedate : di %tdCCYY.NN.DD date(c(current_date), "DMY") // date of the report
 	
 	local hfc_file "$base/Data/$filename$filedate.csv"
 
 	export excel using  "$base/Data/$filename$filedate.csv", replace
 	
-	global id_info "country_code"
+	
 	
 	foreach var of varlist _all {
 		char `var'[charname] "`var'"
-
+	}
 
 	//Check duplicate IDs
-	sort country_code
+	sort region country_code
 	
 	capture drop id_dup
 	duplicates tag country_code, generate(id_dup) // Sort and Check for unique identifiers
 		if _rc != 0 di "observations by country are NOT unique in country_code"
 		else if _rc == 0 di "observations by country are unique in this section"
 	
-	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("Duplicate Country ID") headchars(charname)
+	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("  ,Duplicate Country ID") headchars(charname)
 	
 	///E1 Please indicate which types of financial service providers are allowed to contract third-party agents to perform some of their transactions. Check all that apply for each type of financial service provider
 	
-	local var_1 e1_a_1 e1_a_2 e1_a_3 e1_a_4 e1_a_5 e1_h_6
+	#delimit ;
+	local var_1 e2_a_1
+				e2_a_2
+				e2_a_3
+				e2_a_4
+				e2_a_5
+				e2_a_6
+				e2_b_1
+				e2_b_2
+				e2_b_3
+				e2_b_4
+				e2_b_5
+				e2_b_6
+				e2_c_1
+				e2_c_2
+				e2_c_3
+				e2_c_4
+				e2_c_5
+				e2_c_6
+				e2_d_1
+				e2_d_2
+				e2_d_3
+				e2_d_4
+				e2_d_5
+				e2_d_6
+				e2_e_1
+				e2_e_2
+				e2_e_3
+				e2_e_4
+				e2_e_5
+				e2_e_6
+				e2_f_1
+				e2_f_2
+				e2_f_3
+				e2_f_4
+				e2_f_5
+				e2_f_6
+				e2_g_1
+				e2_g_2
+				e2_g_3
+				e2_g_4
+				e2_g_5
+				e2_g_6
+				e2_h_1
+				e2_h_2
+				e2_h_3
+				e2_h_4
+				e2_h_5
+				e2_h_6;
+	 #delimit cr	
 	
-	local var_2 b1_1 b1_2 b1_3 b1_4 b1_5 b1_6
-	
+	#delimit ;
+	local var_2 b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6
+				b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6
+				b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6
+				b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6
+				b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6
+				b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6
+				b1_1
+				b1_2
+				b1_3
+				b1_4
+				b1_5
+				b1_6;
+	 #delimit cr		
 	local n : word count `var_2'
 	
 	//Missing values
@@ -120,12 +196,12 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E1") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E1") headchars(charname)
 		
 	mdesc `var_1'
-	
+	/* No need to condition on b1_1/6
 	//Consitency checks of e1_a/h_1/6, only IF b1_1/6 == Yes
 	capture drop consischeck
 	gen consischeck = 0
@@ -136,11 +212,11 @@
 		
 		dis "`a'"  "`b'"
 		replace consischeck = 1 if (`a' != "NA" & `b' == "Yes") //Dobule check, is this conditional OK???
-	
+		}
 	br $id_info `var_1' consischeck `var_2' if consischeck == 1
 	
-	listtab $id_info `var_1' consischeck `var_2' if consischeck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Consitency check of E1 variables: Answer accoding to b1_1/6") headchars(charname)
-
+	listtab $id_info `var_1' consischeck `var_2' if consischeck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Consitency check of E1 variables: Answer accoding to b1_1/6") headchars(charname)
+	*/
 		
 	///E2. If financial service providers are allowed to have agents, please specify which type of rules apply regulating the relationships between the financial service provider, the agent, and the consumer:
 	#delimit ;
@@ -200,9 +276,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E2") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E2") headchars(charname)
 		
 	mdesc `var_1'
 
@@ -242,9 +318,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E3") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E3") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -264,9 +340,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E4") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E4") headchars(charname)
 		
 	mdesc `var_1'
 
@@ -290,10 +366,10 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E5") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E5") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -307,10 +383,10 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
-		
+		}	
 
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E5")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E5")headchars(charname)
 	   
 	 
 	///E6.  Do financial service providers have access, or report, to a credit bureau or credit registry? A credit bureau is a privately owned company which collects information relating to the credit ratings of individuals and makes it available to banks, finance companies, etc. Credit registries, the other main type of credit reporting institutions, tend to be public entities, managed by bank supervisors or central banks. Check all that apply for each type of financial service provider.
@@ -363,9 +439,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E6") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E6") headchars(charname)
 	
 	mdesc `var_1'
 	
@@ -379,9 +455,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E6")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E6")headchars(charname)
 	
 	///E7. Are financial service providers subject to explicit caps on interest rates or other limitations on loan pricing, e.g. maximum profit margins, maximum spread or restrictions on loan fees and charges? Select one option for each type of financial service provider. 
 	#delimit ;
@@ -415,9 +491,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E7") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E7") headchars(charname)
 
 	mdesc `var_1'
 	
@@ -431,9 +507,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
-
+	}
 		
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E7")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E7")headchars(charname)
 	
 	
 	///E8. Does regulation explicitly require authorization of new or modified financial products?
@@ -468,9 +544,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E8") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E8") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -484,9 +560,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E8")headchars(charname)	   
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E8")headchars(charname)	   
 	   
 	///E9. Is there a requirement in law or regulation that customers’ e-money funds be separated from the funds of the e-money issuer?  
 	//Missing values
@@ -495,7 +571,7 @@
 	
 	replace mcheck = 1 if missing(e9_1)
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E9") headchars(charname)
+	listtab $id_info e9_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E9") headchars(charname)
 		
 	mdesc `var_1'
 		
@@ -516,9 +592,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E10a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E10a") headchars(charname)
 		
 	mdesc `var_1'
 
@@ -528,7 +604,7 @@
 	
 	replace skipcheck = 1 if (missing(e10_1_specify) & e10_1_6_other  == "Yes")
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E10a")headchars(charname)
+	listtab $id_info e10_1_specify skipcheck e10_1_6_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E10a")headchars(charname)
 	
 	
 	///E11. Are non-bank e-money issuers prohibited by law or regulation from using customer funds for purposes other than redeeming e-money and executing fund transfers? 
@@ -539,7 +615,7 @@
 	
 	replace mcheck = 1 if missing(e11_1)
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E11") headchars(charname)
+	listtab $id_info e11_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E11") headchars(charname)
 	
 	mdesc `var_1'
 		
@@ -557,9 +633,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i') 
-
+	}
 		
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E12") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E12") headchars(charname)
 
 	mdesc `var_1'
 	
@@ -582,9 +658,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E13.1") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E13.1") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -598,9 +674,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E13.1")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E13.1")headchars(charname)
 	
 	
 	///E13.2  Are there legal and/or regulatory requirements specifying which documents individuals must submit for opening an e-money account with a financial service provider?
@@ -622,9 +698,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E13.2") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E13.2") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -638,12 +714,13 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E13.2")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E13.2")headchars(charname)
 	
 	
 	///E14. According to current law or regulation, which of the following information is required to open the lowest risk-based transaction or e-money account and what documents are required/accepted to verify it?
+	
 	#delimit ;
 	local var_1 e14_a_1_1
 				e14_a_1_2
@@ -651,54 +728,18 @@
 				e14_a_1_4
 				e14_a_1_5
 				e14_a_1_6
-				e14_a_2_1
-				e14_a_2_2
-				e14_a_2_3
-				e14_a_2_4
-				e14_a_2_5
-				e14_a_2_6
-				e14_a_3_1
-				e14_a_3_2
-				e14_a_3_3
-				e14_a_3_4
-				e14_a_3_5
-				e14_a_3_6
-				e14_a_4_1
-				e14_a_4_2
-				e14_a_4_3
-				e14_a_4_4
-				e14_a_4_5
-				e14_a_4_6
-				e14_a_5_1
-				e14_a_5_2
-				e14_a_5_3
-				e14_a_5_4
-				e14_a_5_5
-				e14_a_5_6
 				e14_b_1_1
 				e14_b_1_2
 				e14_b_1_3
 				e14_b_1_4
 				e14_b_1_5
 				e14_b_1_6
-				e14_b_2_1
-				e14_b_2_2
-				e14_b_2_3
-				e14_b_2_4
-				e14_b_2_5
-				e14_b_2_6
 				e14_c_1_1
 				e14_c_1_2
 				e14_c_1_3
 				e14_c_1_4
 				e14_c_1_5
 				e14_c_1_6
-				e14_c_2_1
-				e14_c_2_2
-				e14_c_2_3
-				e14_c_2_4
-				e14_c_2_5
-				e14_c_2_6
 				e14_d_1_1
 				e14_d_1_2
 				e14_d_1_3
@@ -710,16 +751,41 @@
 				e14_e_1_3
 				e14_e_1_4
 				e14_e_1_5
-				e14_e_1_6
-				e14_f_1
-				e14_f_2
-				e14_f_3
-				e14_f_4
-				e14_f_5
-				e14_f_6;
+				e14_e_1_6;
 	 #delimit cr	
 	 
-	local var_2 b1_1 b1_2 b1_3 b1_4 b1_5 b1_6
+    #delimit ;
+	 local var_2 b1_1
+				 b1_2 
+				 b1_3 
+				 b1_4 
+				 b1_5 
+				 b1_6
+				 b1_1
+				 b1_2 
+				 b1_3 
+				 b1_4 
+				 b1_5 
+				 b1_6
+				 b1_1
+				 b1_2 
+				 b1_3 
+				 b1_4 
+				 b1_5 
+				 b1_6
+				 b1_1
+				 b1_2 
+				 b1_3 
+				 b1_4 
+				 b1_5 
+				 b1_6
+				 b1_1
+				 b1_2 
+				 b1_3 
+				 b1_4 
+				 b1_5 
+				 b1_6;
+	 #delimit cr	
 	
 	local n : word count `var_2'
 			
@@ -729,11 +795,13 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E14") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E14") headchars(charname)
 		
 	mdesc `var_1'
+	
+			//Comment: e14_f_1 e14_f_2 e14_f_3 e14_f_4 e14_f_5 e14_f_6, other please [Text]
 	
 	//Skip value, missing only
 	capture drop skipcheck
@@ -745,9 +813,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
-	
+	}	
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E14")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E14")headchars(charname)
 	
 	
 	///E15a Can financial service providers verify a customer’s identity through digital means in the context of transaction or e-money account opening?
@@ -758,7 +826,7 @@
 	
 	replace mcheck = 1 if missing(e14_2_1)
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E15a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E15a") headchars(charname)
 		
 		
 	//Skip value, missing only
@@ -767,7 +835,7 @@
 	
 	replace skipcheck = 1 if missing(e14_2_1_explain)& e14_2_1 == "Yes other"
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E15a")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E15a")headchars(charname)
 	
 	
 	///E15b What information can be verified through digital means? (Select all that apply)
@@ -786,12 +854,13 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E15b") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E15b") headchars(charname)
 		
 	mdesc `var_1'
 	
+	/* Checked, no skipping needed
 	//Skip value, missing only // Double check!!!!
 	capture drop skipcheck
 	gen skipcheck = 0
@@ -802,10 +871,10 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
-
+	}
 	   
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E15b")headchars(charname)	   
-	   
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E15b")headchars(charname)	   
+	   */
 	///E16a. Can financial service providers use biometric verification (e.g., using fingerprints, face, or iris) to confirm the identity of a customer?
 	
 	//Missing values
@@ -814,7 +883,7 @@
 	
 	replace mcheck = 1 if missing(e16_a_1)
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E16a") headchars(charname)
+	listtab $id_info e16_a_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E16a") headchars(charname)
 
 	//Skip value, missing only
 	capture drop skipcheck
@@ -822,7 +891,7 @@
 	
 	replace skipcheck = 1 if missing(e16_a_1_explain)& e16_a_1 == "Yes other"
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E16a")headchars(charname)
+	listtab $id_info e16_a_1_explain skipcheck e16_a_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E16a")headchars(charname)
 		
 	///E16b. Are financial service providers charged a fee for digital identity verification / authentication by the identity provider(s)?
 	
@@ -834,7 +903,7 @@
 	
 	capture assert mcheck == 1 
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E16b") headchars(charname)
+	listtab $id_info e16_b_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E16b") headchars(charname)
 
 	///E17. What elements of a risk-based approach to AML/CFT regulation have been implemented? Please mark all that apply
 	#delimit ;
@@ -872,9 +941,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E17") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E17") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -887,10 +956,11 @@
 		local b : word `i' of `var_2'
 		
 		dis "`a'"  "`b'"
-		replace skipcheck = 1 if (`a' != "NA" & `b' == "Yes")
-		
+		replace skipcheck = 1 if (missing(`a') & `b' == "Yes")
+	}		
 	
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E17")headchars(charname)	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E17")headchars(charname)	
+	
 	/*
 	capture drop mcheck
 	gen mcheck = 0
@@ -921,9 +991,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E18") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E18") headchars(charname)
 		
 	mdesc `var_1'
 	//Double check!!
@@ -942,9 +1012,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E19a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E19a") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -954,7 +1024,7 @@
 	
 	replace skipcheck = 1 if missing(e19_a_1_explain)& e19_a_1_3_yesother == "Yes other"	
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E19a")headchars(charname)
+	listtab $id_info e19_a_1_explain skipcheck e19_a_1_3_yesother if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E19a")headchars(charname)
 	
 	
 	///E19b How is remote customer due diligence facilitated? (Select all that apply)
@@ -971,9 +1041,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E19b") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E19b") headchars(charname)
 		
 	mdesc `var_1'
 	
@@ -983,7 +1053,7 @@
 	
 	replace skipcheck = 1 if missing(e17_2_1_specify)& e19_b_1_4_otherplea == "Yes other" ///Problem! See Skip Logic sheet	
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E19b")headchars(charname)
+	listtab $id_info e17_2_1_specify skipcheck e19_b_1_4_otherplea if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E19b")headchars(charname)
 	
 	
 	////E20a. Does your country have a digital ID solution/system in place that enables people to authenticate themselves remotely (without in-person presences) to securely access transactions or services online ?
@@ -994,7 +1064,7 @@
 	
 	replace mcheck = 1 if missing(e21_a_1)
 
-	listtab $id_info e21_a_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E20a") headchars(charname)
+	listtab $id_info e21_a_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E20a") headchars(charname)
 		
 	///E20b. Please provide the name / website for the system(s):
 	///E20c. Which entities currently serve as digital identity providers (select all that apply)
@@ -1015,9 +1085,9 @@
 	foreach i of local var_1 {
 		replace skipcheck = 1 if missing(`i') & (e21_a_1 == "No"|e21_a_1 == "NA") //Double check!!
 
+	}
 
-
-	listtab $id_info `var_1' skipcheck e21_a_1 e21_a_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skipping values in E20b E20c E20d") headchars(charname)
+	listtab $id_info `var_1' skipcheck e21_a_1 e21_a_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skipping values in E20b E20c E20d") headchars(charname)
 		
 	mdesc `var_1'	
 	
@@ -1033,9 +1103,9 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E21a") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E21a") headchars(charname)
 		
 	mdesc `var_1'	
 	
@@ -1047,7 +1117,7 @@
 	
 	replace skipcheck = 1 if missing(e20_b_1_specify) & e20_b_1 == "Yes"
 		
-	listtab $id_info e20_b_1_specify skipcheck e20_b_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skipping values in E21b") headchars(charname)
+	listtab $id_info e20_b_1_specify skipcheck e20_b_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skipping values in E21b") headchars(charname)
 	
 	
 	///E21c. When are financial service providers permitted to share/disclose personal data about an individual with other parties? (select all that apply)
@@ -1058,7 +1128,7 @@
 	
 	replace skipcheck = 1 if missing(e20_c_1_explain) & e20_c_1_4_other == "Yes"
 	
-	listtab $id_info e20_c_1_explain skipcheck e20_c_1_4_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skipping values in E21c") headchars(charname)
+	listtab $id_info e20_c_1_explain skipcheck e20_c_1_4_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skipping values in E21c") headchars(charname)
 	
 	
 	///E21d. An individual’s consent to sharing/disclosure of their personal data must meet these requirements: (select all that apply)
@@ -1076,10 +1146,11 @@
 	gen mcheck = 0
 	
 	foreach i of local var_1 {
-		replace mcheck = 1 if missing(`i')
+		replace mcheck = 1 if missing(`i') & e21_a_1 == "Yes"
 
+	}
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E21d") headchars(charname)
+	listtab $id_info `var_1' mcheck e21_a_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E21d") headchars(charname)
 	
 	mdesc `var_1'	
 	
@@ -1090,31 +1161,26 @@
 				e22_a_3
 				e22_a_4
 				e22_a_5
-				e22_a_6
 				e22_b_1
 				e22_b_2
 				e22_b_3
 				e22_b_4
 				e22_b_5
-				e22_b_6
 				e22_c_1
 				e22_c_2
 				e22_c_3
 				e22_c_4
 				e22_c_5
-				e22_c_6
 				e22_d_1
 				e22_d_2
 				e22_d_3
 				e22_d_4
 				e22_d_5
-				e22_d_6
 				e22_e_1
 				e22_e_2
 				e22_e_3
 				e22_e_4
-				e22_e_5
-				e22_e_6;
+				e22_e_5;
 	#delimit cr	
 			
 	//Missing values
@@ -1123,11 +1189,15 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
+	}
 
-
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E22") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E22") headchars(charname)
 		
 	mdesc `var_1'
+	
+			//Comment: e22_a_6 e22_b_6 e22_c_6 e22_d_6 e22_e_6 [Text]
+
+
 	
 	// Other conditional values:
 	//a2. If yes, approximately how many providers are active as of 2019?
@@ -1159,10 +1229,10 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes")
-	
+		}
 
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E22: If yes, approximately how many providers are active as of 2019?") headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E22: If yes, approximately how many providers are active as of 2019?") headchars(charname)
 	
 	//a3. Approximately how many customers are using these services to your knowledge?
 	#delimit ;
@@ -1193,9 +1263,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes")
-	
+		}
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E22: Approximately how many customers are using these services to your knowledge?") headchars(charname)	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E22: Approximately how many customers are using these services to your knowledge?") headchars(charname)	
 	
 	//b2. Specify who issues the license/authorization
 	#delimit ;
@@ -1226,9 +1296,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes")
-	
+		}
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E22: Specify who issues the license/authorization") headchars(charname)	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E22: Specify who issues the license/authorization") headchars(charname)	
 	
 	//c2. specify who supervises these products/providers for FCP
 	#delimit ;
@@ -1259,9 +1329,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`a') & `b' == "Yes")
-	
+		}
 
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E22: specify who supervises these products/providers for FCP") headchars(charname)	
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E22: specify who supervises these products/providers for FCP") headchars(charname)	
 	
 	
 	///E23. Please indicate if your country has adopted any of the following data sharing models (select all that apply)
@@ -1278,10 +1348,10 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in E23") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in E23") headchars(charname)
 		
 	mdesc `var_1'	
 	
@@ -1291,20 +1361,6 @@
 	
 	replace skipcheck = 1 if missing(e23_1_specify) & e23_1_4_other == "Yes"	
 
-	listtab $id_info e23_1_specify skipcheck e23_1_4_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in E23")headchars(charname)
+	listtab $id_info e23_1_specify skipcheck e23_1_4_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in E23")headchars(charname)
 	
 	////END////
-
-	//F. Institutional Arrangements and Regulatory Framework for Financial Consumer Protection	
-
-	
-	//G. Disclosure and Transparency	
-
-	
-	//H. Fair Treatment and Business Conduct	
-
-	
-	//I. Complaints Handling, Dispute Resolution, and Recourse	
-
-	
-	//J. Financial Education and Capability

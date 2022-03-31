@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Section F
+/// Project: FICP_Survey_Project -- Section F
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -33,10 +33,15 @@
 	include "Global_macro_A.do"
 	
 
-	global data "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/Data/Database `dir'"
-			
-	global output "D:/Documents/Consultorias/World_Bank/FI_Survey_Project/OUTPUT"
 	
+	else {
+		global base "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project"
+		cd "$base"
+		
+		global data "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/Data/Database `dir'"
+			
+		global output "D:/Documents/Consultorias/World_Bank/FICP_Survey_Project/OUTPUT"
+	}
 	
     //Install required packages
 	//ssc install listtab
@@ -50,31 +55,33 @@
 	keep if status == "Submitted to Review" // 133 observations deleted
 	keep if year == 2022 // 0 observations deleted
 
-	//assert c(N) == 84
+	merge 1:1 country_code using "$base/WB_CountryClassification.dta"
+	keep if year == 2022 // 173 observations deleted
 	
+	//assert c(N) == 91 
+
 	//Create output files and setting charinclude
-	global filename  "FI_survey_Section_F_HFC_"  // Change accordingly
+	global filename  "FICP_survey_Section_F_HFC_"  // Change accordingly
 	global filedate : di %tdCCYY.NN.DD date(c(current_date), "DMY") // date of the report
 	
 	local hfc_file "$base/Data/$filename$filedate.csv"
 
 	export excel using  "$base/Data/$filename$filedate.csv", replace
 	
-	global id_info "country_code"
 	
 	foreach var of varlist _all {
 		char `var'[charname] "`var'"
-
+	}
 	
 	//Check duplicate IDs
-	sort country_code
+	sort region country_code
 	
 	capture drop id_dup
 	duplicates tag country_code, generate(id_dup) // Sort and Check for unique identifiers
 		if _rc != 0 di "observations by country are NOT unique in country_code"
 		else if _rc == 0 di "observations by country are unique in this section"
 	
-	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("Duplicate Country ID") headchars(charname)	
+	listtab $id_info using `hfc_file' if id_dup == 1, delimiter(",") replace headlines("  ,Duplicate Country ID") headchars(charname)	
 	
 /////////////////////////////////////////////////////////////
 //// 1. Checks skip logic and missing values by section          ////
@@ -114,9 +121,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F1.1 due to f1_1_*_1 == No | NA ")headchars(charname)
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F1.1 due to f1_1_*_1 == No | NA ")headchars(charname)
 	   
 	   
 	///F1.2 What type(s) of regulations exist in your country pertaining to financial consumer protection topics?  Please mark all that apply.
@@ -150,9 +157,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F1.2 due to f1_2_*_1 == No | NA ")headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F1.2 due to f1_2_*_1 == No | NA ")headchars(charname)
 
 
 	///F2. Please indicate which statement best describes the structure for financial consumer protection regulation and supervision in your country?   Please mark all that apply.  
@@ -186,9 +193,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
+	}
 
-
-	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F2 due to f2_*_1 == NA ") headchars(charname)
+	listtab $id_info `var_1' skipcheck `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F2 due to f2_*_1 == NA ") headchars(charname)
 	
 	//Skip value, missing only, If f2_e_1== NA, skip f2_1_specify
 
@@ -197,7 +204,7 @@
 	
 	replace skipcheck = 1 if missing(f2_1_specify)& f2_e_1 == "Yes"
 
-	listtab $id_info f2_1_specify skipcheck f2_e_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F2 due to f2_e_1== NA")headchars(charname)
+	listtab $id_info f2_1_specify skipcheck f2_e_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F2 due to f2_e_1== NA")headchars(charname)
 
 
 	///F3. Which of the following best describes the separate unit(s) or team(s) designated to implement, oversee and/or enforce aspects of financial consumer protection law or regulation in your agency?  Please mark all that apply.  
@@ -215,11 +222,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in F3") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in F3") headchars(charname)
 
 
 	///F4. What are the main activities of the separate unit(s) or team(s) with respect to financial consumer protection for financial services providers?  Please mark all that apply.  
@@ -242,11 +249,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in F4") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in F4") headchars(charname)
 
 	
 	//Skip value, missing only, If All f4a_1_* == No, skip f4a_2, f4a_3
@@ -258,7 +265,7 @@
 	
 	replace skipcheck = 1 if count_o != 9 & (missing(f4a_2) | missing(f4a_3) ) // Double check
 	
-	listtab $id_info f4a_1_* skipcheck f4a_2 f4a_3 if skipcheck == 1 & count_o == 9, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F4 due to All f4a_1_* == No") headchars(charname)
+	listtab $id_info f4a_1_* skipcheck f4a_2 f4a_3 if skipcheck == 1 & count_o == 9, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F4 due to All f4a_1_* == No") headchars(charname)
 	
 	drop All_f4a_1_ count_o
 	
@@ -268,7 +275,7 @@
 	
 	replace skipcheck = 1 if missing(f4b_2) & f4b_1_1_regulation == "Yes"
 
-	listtab $id_info f4b_2 skipcheck f4b_1_1_regulation if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F4 due to f4b_1_1_regulation == No")headchars(charname)	
+	listtab $id_info f4b_2 skipcheck f4b_1_1_regulation if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F4 due to f4b_1_1_regulation == No")headchars(charname)	
 	
 	
 	//Skip value, missing only, If f4c_1  == No, skip f4c_2
@@ -277,7 +284,7 @@
 	
 	replace skipcheck = 1 if missing(f4c_1) & f4c_1 == "Yes"
 
-	listtab $id_info f4c_2 skipcheck f4c_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F4 due to f4c_1  == No") headchars(charname)		
+	listtab $id_info f4c_2 skipcheck f4c_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F4 due to f4c_1  == No") headchars(charname)		
 	
 	
 	//Skip value, missing only, If All f4d_1_* == No, skip f4d_2
@@ -289,7 +296,7 @@
 	
 	replace skipcheck = 1 if count_o != 9 & missing(f4d_2)
 		
-	listtab $id_info f4d_1_* skipcheck f4d_2 if skipcheck == 1 & count_o == 9, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F4 due to All f4d_1_* == No") headchars(charname)
+	listtab $id_info f4d_1_* skipcheck f4d_2 if skipcheck == 1 & count_o == 9, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F4 due to All f4d_1_* == No") headchars(charname)
 	
 	drop All_f4d_1_ count_o
 
@@ -303,7 +310,7 @@
 	
 	replace skipcheck = 1 if count_o != 9 & missing(f4e_2)
 		
-	listtab $id_info f4e_1_* skipcheck f4e_2 if skipcheck == 1 & count_o == 9, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F4 due to All f4e_1_* == No") headchars(charname)
+	listtab $id_info f4e_1_* skipcheck f4e_2 if skipcheck == 1 & count_o == 9, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F4 due to All f4e_1_* == No") headchars(charname)
 	
 	drop All_f4e_1_ count_o	
 	
@@ -337,11 +344,11 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in F5") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in F5") headchars(charname)
 
 	
 		#delimit ;
@@ -395,9 +402,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
-
+	}
 	
-	listtab $id_info `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F5 due to All f5_*_1 == No|NA") headchars(charname)				
+	listtab $id_info `var_2' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F5 due to All f5_*_1 == No|NA") headchars(charname)				
 	
 	//Comment: f5_*_2 labels are wrong! 125 instead of 1-25
 	
@@ -408,7 +415,7 @@
 	
 	replace skipcheck = 1 if (missing(f5_p_2_1) & f5_p_1 == "Yes")
 
-	listtab $id_info f5_p_2_1 skipcheck f5_p_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F5 due to f5_p_1 == No|NA") headchars(charname)
+	listtab $id_info f5_p_2_1 skipcheck f5_p_1 if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F5 due to f5_p_1 == No|NA") headchars(charname)
 
 	
 					
@@ -422,7 +429,7 @@
 
 	mdesc f6_a
 	
-	listtab $id_info f6_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in f6_a") headchars(charname)
+	listtab $id_info f6_a if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in f6_a") headchars(charname)
 	
 	
 	///F6.b What actions does it conduct in relation to complaints data (please specify for each type of institution, if different)?
@@ -466,9 +473,9 @@
 		
 	foreach i of local var_1 {
 		replace skipcheck = 1 if missing(`i') & f6_a == "Yes"
-
+	}
 	
-	listtab $id_info f6b_* skipcheck f6_a if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F6b due to f6_a == No/NA") headchars(charname)		
+	listtab $id_info f6b_* skipcheck f6_a if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F6b due to f6_a == No/NA") headchars(charname)		
 	
 
 	///F7a. Are minimum criteria for financial consumer protection analyzed as part of the licensing process for financial service providers?
@@ -481,7 +488,7 @@
 
 	mdesc f6_a
 	
-	listtab $id_info f7a_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in f7a_1") headchars(charname)
+	listtab $id_info f7a_1 if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in f7a_1") headchars(charname)
 	
 	
 	///F7b. Please select all that apply:
@@ -493,7 +500,7 @@
 
 	replace skipcheck = 1 if missing(f7b_1_specify) & f7b_1_3_other == "Yes"
 
-	listtab $id_info f7b_1_specify skipcheck f7b_1_3_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F7b due to f7b_1_3_other = No") headchars(charname)	
+	listtab $id_info f7b_1_specify skipcheck f7b_1_3_other if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F7b due to f7b_1_3_other = No") headchars(charname)	
 
 	///F7c. Is the financial consumer protection licensing regime by financial services provider type (as opposed to by product type)? 
 	
@@ -508,26 +515,43 @@
 	
 	//WARNING: Why populated authomatically with No? Run: br f8a_1- f8d_6_name if strpos("BRB", country_code )
 	
-	/* CHANGE OF VARIABLES IN NEW DATABASE!!!!!!!!!!!
 	#delimit ;
-	local var_1 f8a_1
-				f8a_2
-				f8a_3
-				f8a_4
-				f8a_5
-				f8a_6
-				f8b_1
-				f8b_2
-				f8b_3
-				f8b_4
-				f8b_5
-				f8b_6
-				f8d_1
-				f8d_2
-				f8d_3
-				f8d_4
-				f8d_5
-				f8d_6;
+	local var_1 f8a_1_1_dataissh 
+				f8a_1_2_spreadshee 
+				f8a_1_3_througha
+				f8a_1_4_apis
+				f8a_1_5_datapull
+				f8a_1_6_other 
+				f8a_2_1_dataissh 
+				f8a_2_2_spreadshee 
+				f8a_2_3_througha
+				f8a_2_4_apis
+				f8a_2_5_datapull
+				f8a_2_6_other
+				f8a_3_1_dataissh 
+				f8a_3_2_spreadshee 
+				f8a_3_3_througha
+				f8a_3_4_apis
+				f8a_3_5_datapull
+				f8a_3_6_other
+				f8a_4_1_dataissh 
+				f8a_4_2_spreadshee 
+				f8a_4_3_througha
+				f8a_4_4_apis
+				f8a_4_5_datapull
+				f8a_4_6_other
+				f8a_5_1_dataissh 
+				f8a_5_2_spreadshee 
+				f8a_5_3_througha
+				f8a_5_4_apis
+				f8a_5_5_datapull
+				f8a_5_6_other
+			    f8a_6_1_dataissh 
+				f8a_6_2_spreadshee 
+				f8a_6_3_througha
+				f8a_6_4_apis
+				f8a_6_5_datapull
+				f8a_6_6_other;
 	 #delimit cr
 	 			
 	//Missing values, Need to have Yes/No/NA
@@ -536,26 +560,47 @@
 	
 	foreach i of local var_1 {
 		replace mcheck = 1 if missing(`i')
-
+	}
 	
 	mdesc `var_1'
 	
-	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Missing values in F8") headchars(charname)
+	listtab $id_info `var_1' if mcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Missing values in F8") headchars(charname)
 
 	
 	//Skip value, missing only, If f8_1/6 == Other specify, skip f8a_*_specify
-	
-	#delimit ;
-	local var_1 f8a_1
-				f8a_2
-				f8a_3
-				f8a_4
-				f8a_5
-				f8a_6;
-	#delimit cr 
 
 	#delimit ;
 	local var_2 f8a_1_specify
+				f8a_2_specify
+				f8a_3_specify
+				f8a_4_specify
+				f8a_5_specify
+				f8a_6_specify
+				f8a_1_specify
+				f8a_2_specify
+				f8a_3_specify
+				f8a_4_specify
+				f8a_5_specify
+				f8a_6_specify
+				f8a_1_specify
+				f8a_2_specify
+				f8a_3_specify
+				f8a_4_specify
+				f8a_5_specify
+				f8a_6_specify
+				f8a_1_specify
+				f8a_2_specify
+				f8a_3_specify
+				f8a_4_specify
+				f8a_5_specify
+				f8a_6_specify
+				f8a_1_specify
+				f8a_2_specify
+				f8a_3_specify
+				f8a_4_specify
+				f8a_5_specify
+				f8a_6_specify
+				f8a_1_specify
 				f8a_2_specify
 				f8a_3_specify
 				f8a_4_specify
@@ -574,13 +619,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Other specify")
+	}
 
-
-	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F8 due to f8_1/6 == Other specify") headchars(charname)		
-
-	
-	
-*/ //END of CHANGE of VARIABLES
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F8 due to f8_1/6 == Other specify") headchars(charname)		
 
 	//Skip value, missing only, If f8c_1/6__1_webscrapi == No, skip f8_web_scraping_specify_1/6
 	
@@ -613,9 +654,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
+	}
 
-
-	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F8 due to f8c_1/6__1_webscrapi == No") headchars(charname)		
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F8 due to f8c_1/6__1_webscrapi == No") headchars(charname)		
 
 	//Skip value, missing only, If f8c_1/6_3_other == No, skip f8_other_specify_1/6
 	
@@ -648,9 +689,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
+	}
 
-
-	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F8 due to f8c_1/6_3_other == No") headchars(charname)	
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F8 due to f8c_1/6_3_other == No") headchars(charname)	
 	
 	
 	
@@ -685,8 +726,9 @@
 		
 		dis "`a'"  "`b'"
 		replace skipcheck = 1 if (missing(`b') & `a' == "Yes")
+	}
 
-
-	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("Skip values in F8 due to f8d_1/6 == No") headchars(charname)	
+	listtab $id_info `var_2' skipcheck `var_1' if skipcheck == 1, delimiter(",") appendto(`hfc_file') replace headlines("  ,Skip values in F8 due to f8d_1/6 == No") headchars(charname)	
 	
 	
+ ////////////END////////

@@ -1,4 +1,4 @@
-/// Project: FI_Survey_Project -- Master files
+/// Project: FICP_Survey_Project -- Master files
 ///-----------------------------------------------------------------------------
 
 ///-----------------------------------------------------------------------------
@@ -30,23 +30,23 @@
 ///-----------------------------------------------------------------------------
 
 	
-
-
-
+	if "`c(username)'" == "WB573601"  {
+		global base "C:\Users\WB573601\OneDrive - WBG\Documents\Abbas Projects\FICP 2022\"
+		cd "$base"
 		
-
+	}
 	
-
-
-	
+	if "`c(username)'" == "wb562573"  {
+		global base "C:\Users\wb562573\OneDrive - WBG\Documents\FICP -team\FICP survey\"
+		cd "$base"	
 		
-
+	}
 	
-	
-		global base "D:\Documents\Consultorias\World_Bank\FI_Survey_Project" //Folder where the do-files are located
-
+	else {
+		global base "D:\Documents\Consultorias\World_Bank\FICP_Survey_Project" //Folder where the do-files are located
+		cd "$base"
 		
-
+	}
 	
     //Install required packages
 	//ssc install listtab
@@ -72,7 +72,7 @@
 
 		//BE AWARE: ALL do files should be in the same folder as this do-file
 
-	//Set data version by changing the following do-file:
+	//Set data version and id categories by changing the following do-file:
 		
 		include "Global_macro_A.do"
 		
